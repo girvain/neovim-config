@@ -7,7 +7,7 @@ require'nvim-treesitter.configs'.setup {
 }
 
 -- NERDTree
-vim.g.NERDTreeWinSize = 50
+--vim.g.NERDTreeWinSize = 50
 
 -- Telescope
 --require('telescope').setup{
@@ -120,14 +120,35 @@ vim.api.nvim_create_autocmd("CursorHold", {
   end
 })
 
--- Mason + LSP setup
+-- LSP + Mason setup for Go
+local lspconfig = require("lspconfig")
+
+-- Optional: define on_attach for keymaps / behavior
+local on_attach = function(client, bufnr)
+    local bufmap = function(mode, lhs, rhs, opts)
+        opts = opts or {}
+        opts.buffer = bufnr
+        vim.keymap.set(mode, lhs, rhs, opts)
+    end
+
+    -- example keymaps
+    bufmap("n", "gd", vim.lsp.buf.definition)
+    bufmap("n", "K", vim.lsp.buf.hover)
+end
+
+-- Mason setup
 require("mason").setup()
 
+-- Mason LSP installer (just installs; no auto setup)
 require("mason-lspconfig").setup({
-  ensure_installed = { "gopls" },
+    ensure_installed = { "gopls" },
+    automatic_installation = false,
+    automatic_setup = false,
+    automatic_enable = false,
+    handlers = nil,
 })
 
--- gopls setup
+-- gopls setup (manual, prevents duplicates)
 lspconfig.gopls.setup({
     on_attach = on_attach,
     capabilities = vim.lsp.protocol.make_client_capabilities(),

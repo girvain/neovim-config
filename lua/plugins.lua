@@ -34,7 +34,7 @@ return require('packer').startup(function(use)
   use 'vim-pandoc/vim-pandoc-syntax'
 
   -- Git & file navigation
-  use 'preservim/nerdtree'
+  --use 'preservim/nerdtree'
   use 'tpope/vim-fugitive'
   use 'christoomey/vim-tmux-navigator'
 
@@ -42,14 +42,13 @@ return require('packer').startup(function(use)
   use 'jiangmiao/auto-pairs'
   use 'preservim/nerdcommenter'
   use 'embear/vim-localvimrc'
-  --use {'neoclide/coc.nvim', branch='release'}
   -- use {'fatih/vim-go', run=':GoUpdateBinaries'}
-	use 'folke/which-key.nvim'
+	--use 'folke/which-key.nvim'
 
 	-- trial
   use 'neovim/nvim-lspconfig'
-  use 'williamboman/mason.nvim'
-  use 'williamboman/mason-lspconfig.nvim'
+  use 'mason-org/mason.nvim'
+  use 'mason-org/mason-lspconfig.nvim'
 
   -- Completion
   use 'hrsh7th/nvim-cmp'
