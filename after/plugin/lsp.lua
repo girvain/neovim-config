@@ -1,44 +1,41 @@
--- Treesitter
+-- =================== Treesitter ===================
+
 require'nvim-treesitter.configs'.setup {
-  ensure_installed = { "c", "lua", "vim", "help", "query", "typescript", "javascript", "html", "css", "clojure", "haskell", "rust" },
+  ensure_installed = {
+    "c", "lua", "vim", "help", "query",
+    "typescript", "javascript", "html", "css",
+    "clojure", "haskell", "rust"
+  },
   sync_install = false,
   auto_install = false,
   highlight = { enable = true, additional_vim_regex_highlighting = false }
 }
 
--- NERDTree
---vim.g.NERDTreeWinSize = 50
-
--- Telescope
---require('telescope').setup{
---  defaults = {
---    file_ignore_patterns = {"node_modules", ".git/"}
---  }
---}
+-- =================== Telescope ===================
 
 require('telescope').setup({
   defaults = {
     layout_strategy = "horizontal",
     layout_config = {
-      -- Position the results at the bottom
-      anchor = "S",          -- 'S' = south / bottom
+      anchor = "S",
       prompt_position = "bottom",
-      height = 15,           -- fixed height in lines
-      width = 0.99,           -- 90% of screen width
+      height = 15,
+      width = 0.99,
       preview_width = 0.6,
-      -- optional: cutoff preview for small screens
       preview_cutoff = 1,
     },
-    sorting_strategy = "ascending", -- newest at the bottom
-		file_ignore_patterns = {"node_modules", ".git/", "target"},
+    sorting_strategy = "ascending",
+    file_ignore_patterns = {"node_modules", ".git/", "target"},
   }
 })
 
--- FZF
+-- =================== FZF ===================
+
 vim.cmd [[ set rtp+=/usr/local/opt/fzf ]]
 vim.g.fzf_layout = { down = '30%' }
 
--- Colorscheme
+-- =================== Colorscheme ===================
+
 require("gruvbox").setup({
   contrast = "medium",
   dim_inactive = false,
@@ -47,69 +44,47 @@ require("gruvbox").setup({
     strings  = { italic = false },
     keywords = { italic = true },
     functions = { bold = true },
-    variables = {},
   },
   transparent_mode = false,
 })
+
 vim.cmd("colorscheme gruvbox")
 
 -- =================== LSP & Completion ===================
 
 local lspconfig = require("lspconfig")
 
+-- Capabilities (for nvim-cmp)
+local cmp_nvim_lsp = require("cmp_nvim_lsp")
+local capabilities = cmp_nvim_lsp.default_capabilities()
 
+-- ONE on_attach for all servers
 local on_attach = function(_, bufnr)
-  local wk = require("which-key")
+  local opts = { buffer = bufnr, silent = true, noremap = true }
 
-  -- Normal mappings (still needed!)
-local opts = { buffer = bufnr, silent = true, noremap = true }
+  -- Navigation
+  vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
+  vim.keymap.set("n", "gD", vim.lsp.buf.declaration, opts)
+  vim.keymap.set("n", "gr", vim.lsp.buf.references, opts)
+  vim.keymap.set("n", "gi", vim.lsp.buf.implementation, opts)
+  vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
 
-vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
-vim.keymap.set("n", "gD", vim.lsp.buf.declaration, opts)
-vim.keymap.set("n", "gr", vim.lsp.buf.references, opts)
-vim.keymap.set("n", "gi", vim.lsp.buf.implementation, opts)
-vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
+  -- Actions
+  vim.keymap.set("n", "<leader>lr", vim.lsp.buf.rename, opts)
+  vim.keymap.set("n", "<leader>lc", vim.lsp.buf.code_action, opts)
 
-vim.keymap.set("n", "<leader>lr", vim.lsp.buf.rename, opts)
-vim.keymap.set("n", "<leader>lc", vim.lsp.buf.code_action, opts)
-vim.keymap.set("n", "<leader>ldl", vim.diagnostic.open_float, opts)
-vim.keymap.set("n", "<leader>ld", vim.diagnostic.setloclist, opts)
-vim.keymap.set("n", "[d", vim.diagnostic.goto_prev, opts)
-vim.keymap.set("n", "]d", vim.diagnostic.goto_next, opts)
-
-  -- Which-key descriptions
-  --wk.register({
-  --  g = {
-  --    d = "Go to definition",
-  --    D = "Go to declaration",
-  --    r = "References",
-  --    i = "Implementation",
-  --  },
-  --  ["K"] = "Hover documentation",
-  --  ["[d"] = "Previous diagnostic",
-  --  ["]d"] = "Next diagnostic",
-  --}, opts)
-
-  --wk.register({
-  --  r = {
-  --    n = "Rename symbol",
-  --  },
-  --  c = {
-  --    a = "Code action",
-  --  },
-  --  e = "Line diagnostics",
-  --}, {
-  --  prefix = "<leader>",
-  --  buffer = bufnr,
-  --})
-
+  -- Diagnostics
+  vim.keymap.set("n", "<leader>ldl", vim.diagnostic.open_float, opts)
+  vim.keymap.set("n", "<leader>ld", vim.diagnostic.setloclist, opts)
+  vim.keymap.set("n", "[d", vim.diagnostic.goto_prev, opts)
+  vim.keymap.set("n", "]d", vim.diagnostic.goto_next, opts)
 end
 
-vim.o.updatetime = 300 -- cursor hold delay
+-- Diagnostics popup on hover
+vim.o.updatetime = 300
 
 vim.api.nvim_create_autocmd("CursorHold", {
   callback = function()
-    -- protected call prevents other plugin errors from breaking diagnostics
     pcall(vim.diagnostic.open_float, nil, {
       focusable = false,
       close_events = { "BufLeave", "CursorMoved", "InsertEnter", "FocusLost" },
@@ -120,80 +95,63 @@ vim.api.nvim_create_autocmd("CursorHold", {
   end
 })
 
--- LSP + Mason setup for Go
-local lspconfig = require("lspconfig")
+-- =================== Mason ===================
 
--- Optional: define on_attach for keymaps / behavior
-local on_attach = function(client, bufnr)
-    local bufmap = function(mode, lhs, rhs, opts)
-        opts = opts or {}
-        opts.buffer = bufnr
-        vim.keymap.set(mode, lhs, rhs, opts)
-    end
-
-    -- example keymaps
-    bufmap("n", "gd", vim.lsp.buf.definition)
-    bufmap("n", "K", vim.lsp.buf.hover)
-end
-
--- Mason setup
 require("mason").setup()
 
--- Mason LSP installer (just installs; no auto setup)
 require("mason-lspconfig").setup({
-    ensure_installed = { "gopls" },
-    automatic_installation = false,
-    automatic_setup = false,
-    automatic_enable = false,
-    handlers = nil,
+  ensure_installed = { "gopls", "rust_analyzer" },
+  automatic_installation = false,
+  automatic_setup = false,
+  automatic_enable = false,
+  handlers = nil,
 })
 
--- gopls setup (manual, prevents duplicates)
+-- =================== LSP Servers ===================
+
+-- Go
 lspconfig.gopls.setup({
-    on_attach = on_attach,
-    capabilities = vim.lsp.protocol.make_client_capabilities(),
-    settings = {
-        gopls = {
-            gofumpt = true,
-            staticcheck = true,
-        },
+  on_attach = on_attach,
+  capabilities = capabilities,
+  settings = {
+    gopls = {
+      gofumpt = true,
+      staticcheck = true,
     },
+  },
 })
 
--- Completion
+-- Rust
+lspconfig.rust_analyzer.setup({
+  on_attach = on_attach,
+  capabilities = capabilities,
+})
+
+-- Enable inlay hints (replaces rust-tools)
+vim.lsp.inlay_hint.enable(true)
+
+-- =================== Completion ===================
+
 local cmp = require("cmp")
+
 cmp.setup({
-    snippet = {
-        expand = function(args)
-            require('luasnip').lsp_expand(args.body)
-        end,
-    },
-    mapping = {
-        ['<CR>'] = cmp.mapping.confirm({ select = true }),
-        ['<C-Space>'] = cmp.mapping.complete(),
-        ['<C-n>'] = cmp.mapping.select_next_item(),
-        ['<C-p>'] = cmp.mapping.select_prev_item(),
-        ['<C-d>'] = cmp.mapping.scroll_docs(-4),
-        ['<C-f>'] = cmp.mapping.scroll_docs(4),
-    },
-    sources = cmp.config.sources({
-        { name = 'nvim_lsp' },
-        { name = 'luasnip' },
-    }, {
-        { name = 'buffer' },
-    })
-})
-
-
-local cmp_nvim_lsp = require("cmp_nvim_lsp")
-cmp_nvim_lsp.default_capabilities()
-
--- ========== Rust: rust-tools ==========
-require("rust-tools").setup({
-    tools = {
-        inlay_hints = { auto = true }, -- optional
-    },
-    server = {
-        on_attach = on_attach,
-        capabilities = capabilities, },
+  snippet = {
+    expand = function(args)
+      require("luasnip").lsp_expand(args.body)
+    end,
+  },
+  mapping = {
+    ["<CR>"] = cmp.mapping.confirm({ select = true }),
+    ["<C-Space>"] = cmp.mapping.complete(),
+    ["<C-n>"] = cmp.mapping.select_next_item(),
+    ["<C-p>"] = cmp.mapping.select_prev_item(),
+    ["<C-d>"] = cmp.mapping.scroll_docs(-4),
+    ["<C-f>"] = cmp.mapping.scroll_docs(4),
+  },
+  sources = cmp.config.sources({
+    { name = "nvim_lsp" },
+    { name = "luasnip" },
+  }, {
+    { name = "buffer" },
+  }),
 })
